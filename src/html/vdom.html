@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Renderer Demo</title>
+    <style>
+      .red {
+        color: red;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="app"></div>
+
+    <script type="module">
+      import { ShapeFlags, h, mount } from "../compiler/index.js";
+
+      const MyComponent = {
+        render() {
+          return h("div", null, "stateful component");
+        },
+      };
+
+      function MyFunctionalComponent() {
+        return h("div", null, "function component");
+      }
+
+      const vdom = h(
+        "div",
+        {
+          class: "red",
+        },
+        [
+          h("p", null, "text children"),
+          h("p", null, null),
+          h(MyComponent),
+          h(MyFunctionalComponent),
+        ]
+      );
+
+      console.log(vdom);
+
+      mount(vdom, document.querySelector("#app"));
+    </script>
+  </body>
+</html>
