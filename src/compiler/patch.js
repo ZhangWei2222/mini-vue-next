@@ -1,4 +1,4 @@
-import { isArray, isString } from '../shared/utils.js'
+import { isArray, isString } from "../shared/utils.js";
 
 /**
  * @param n1 old VNode
@@ -55,8 +55,9 @@ export function patchChildren(n1, n2, el) {
       });
     } else if (isArray(oldChildren)) {
       // 我们暂且这样粗暴地判断
-      const hasKey = newChildren[0].key !== null;
-      if (hasKey) {
+      const hasKey =
+        newChildren[0].key !== null && newChildren[0].key !== undefined;
+      if (!hasKey) {
         patchUnkeyedChildren(oldChildren, newChildren, el);
       } else {
         patchKeyedChildren(oldChildren, newChildren, el);
@@ -118,15 +119,16 @@ function patchKeyedChildren(c1, c2, container) {
   insertNewElements(c1, c2, container, addElements);
 }
 
-// n1.children = [el-a, el-b, el-c] => [el-c, el-d, el-b, el-a]
+// n1.children = [el-a, el-b, el-c] => [el-c, el-b, el-a]
 // indexArr 为新 children 索引列表[2,1,0]
 // 这表示要把旧 children 中索引为1的元素插入到索引为0之前
 function sortChildrenElements(c1, c2, container, indexArr) {
   let index = indexArr.length - 1;
   while (index > 0) {
-    const nextNode = c1[indexArr[index]];
-    const prevNode = c1[indexArr[index - 1]];
-    container.insertBefore(prevNode.el, nextNode.el);
+    // 把新children
+    const lastChildNode = c1[indexArr[index]].el;
+    const prevChildNode = c1[indexArr[index - 1]].el;
+    container.insertBefore(prevChildNode, lastChildNode);
     index--;
   }
 }

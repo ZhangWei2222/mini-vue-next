@@ -1,95 +1,140 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mini Vue</title>
-    <style>
-      .app {
-        text-align: center;
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini Vue</title>
+  <!-- <script src="https://unpkg.com/vue@next"></script> -->
+  <style>
+    .app {
+      text-align: center;
+    }
+
+    .red {
+      color: red
+    }
+
+    .green {
+      color: green
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app"></div>
+
+  <script>
+    const targetMap = new WeakMap();
+    let activeEffect = null
+    function effect(eff) {
+      activeEffect = eff
+      activeEffect()
+      activeEffect = null
+    }
+
+    function track(target, key) {
+      if (activeEffect) {
+        let depsMap = targetMap.get(target)
+        if (!depsMap) {
+          targetMap.set(target, depsMap = new Map())
+        }
+
+        let dep = depsMap.get(key)
+        if (!dep) {
+          depsMap.set(key, dep = new Set());
+        }
+        dep.add(activeEffect)
       }
+    }
 
-      .red {
-        color: red;
+    function trigger(target, key) {
+      let depsMap = targetMap.get(target)
+      if (depsMap) {
+        let dep = depsMap.get(key)
+        console.log(dep)
+        if (dep) {
+          dep.forEach(effect => effect())
+        }
       }
+    }
 
-      .green {
-        color: green;
+    const reactiveHandler = {
+      get(target, key, receiver) {
+        const result = Reflect.get(target, key, receiver)
+        track(target, key)
+        return result
+      },
+      set(target, key, value, receiver) {
+        const oldVal = target[key]
+        const result = Reflect.set(target, key, value, receiver)
+        if (oldVal !== result) {
+          trigger(target, key)
+        }
+        return result
       }
-    </style>
-  </head>
+    }
 
-  <body>
-    <div id="app"></div>
+    function reactive(target) {
+      return new Proxy(target, reactiveHandler)
+    }
+  </script>
 
-    <script type="module">
-      import { h, mount, patch } from "../compiler/index.js";
-      import { reactive, effect } from "../reactivity/index.js";
+  <script type="module">
+    import { h, mount, patch } from "../compiler/index.js"; 
 
-      const CountComponent = {
-        data: reactive({
-          count: 0,
-          msg: "Hello, Mini-Vue",
-        }),
-        render() {
-          return h("div", { class: "count-wrap" }, [
-            h("p", null, "I am a counter"),
-            h("span", null, this.data.count),
-            h(
-              "button",
-              {
-                onClick: () => {
-                  this.data.count++;
-                },
-              },
-              "count"
-            ),
-          ]);
-        },
-      };
-
-      const App = {
-        data: reactive({
-          msg: "Hello, Mini-Vue",
-        }),
-        render() {
-          return h("div", { class: "app" }, [
-            h("h1", null, this.data.msg),
-            h(
-              "button",
-              {
-                onClick: () => {
-                  this.data.msg = "Byb";
-                },
-              },
-              "Change Text"
-            ),
-            h(CountComponent),
-          ]);
-        },
-      };
-
-      function mountApp(component, container) {
-        let isMounted = false;
-        let prevVdom;
-        effect(() => {
-          console.log("isMounted", isMounted);
-
-          if (!isMounted) {
-            prevVdom = component.render();
-            mount(prevVdom, container);
-            isMounted = true;
-          } else {
-            console.log("--------");
-
-            const newVdom = component.render();
-            patch(prevVdom, newVdom);
-            prevVdom = newVdom;
-          }
-        });
+    const CountComponent = {
+      data: reactive({
+        count: 0
+      }),
+      render() {
+        return h('div', { class: 'count-wrap' }, [
+          h('p', null, 'I am a counter'),
+          h('span', null, this.data.count),
+          h('button', {
+            onClick: () => {
+              this.data.count++
+            }
+          }, 'count')
+        ])
       }
+    }
 
-      mountApp(App, document.getElementById("app"));
-    </script>
-  </body>
+    const App = {
+      data: reactive({
+        msg: 'Hello, Mini-Vue'
+      }),
+      render() {
+        return h('div', { class: 'app' }, [
+          h('h1', null, this.data.msg),
+          h('button', {
+            onClick: () => {
+              this.data.msg = 'Byb'
+            }
+          }, 'Change Text'),
+          h(CountComponent)
+        ])
+      }
+    }
+
+    function mountApp(component, container) {
+      let isMounted = false
+      let prevVdom
+      effect(() => {
+        if (!isMounted) {
+          prevVdom = component.render()
+          mount(prevVdom, container)
+          isMounted = true
+        } else {
+          const newVdom = component.render()
+          patch(prevVdom, newVdom)
+          prevVdom = newVdom
+        }
+      })
+    }
+
+    mountApp(App, document.getElementById('app'))
+  </script>
+</body>
+
 </html>
