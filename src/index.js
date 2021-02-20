@@ -1,6 +1,6 @@
 import { reactive, effect, computed, ref } from "./reactivity";
 
-import { h, mount } from "./compiler";
+import { h, mount } from "./renderer";
 
 // const MyComponent = {
 //   render() {},
