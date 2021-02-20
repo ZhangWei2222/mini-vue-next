@@ -24,64 +24,9 @@
 <body>
   <div id="app"></div>
 
-  <script>
-    const targetMap = new WeakMap();
-    let activeEffect = null
-    function effect(eff) {
-      activeEffect = eff
-      activeEffect()
-      activeEffect = null
-    }
-
-    function track(target, key) {
-      if (activeEffect) {
-        let depsMap = targetMap.get(target)
-        if (!depsMap) {
-          targetMap.set(target, depsMap = new Map())
-        }
-
-        let dep = depsMap.get(key)
-        if (!dep) {
-          depsMap.set(key, dep = new Set());
-        }
-        dep.add(activeEffect)
-      }
-    }
-
-    function trigger(target, key) {
-      let depsMap = targetMap.get(target)
-      if (depsMap) {
-        let dep = depsMap.get(key)
-        console.log(dep)
-        if (dep) {
-          dep.forEach(effect => effect())
-        }
-      }
-    }
-
-    const reactiveHandler = {
-      get(target, key, receiver) {
-        const result = Reflect.get(target, key, receiver)
-        track(target, key)
-        return result
-      },
-      set(target, key, value, receiver) {
-        const oldVal = target[key]
-        const result = Reflect.set(target, key, value, receiver)
-        if (oldVal !== result) {
-          trigger(target, key)
-        }
-        return result
-      }
-    }
-
-    function reactive(target) {
-      return new Proxy(target, reactiveHandler)
-    }
-  </script>
-
   <script type="module">
-    import { h, mount, patch } from "../compiler/index.js"; 
+    import { h,patch, ShapeFlags,mount } from "../compiler/index.js"; 
+    import {reactive, effect } from "../reactivity/index.js"; 
 
     const CountComponent = {
       data: reactive({
